@@ -40,6 +40,29 @@ class State
 
     when "PUSHN"
       @stackK.push -1
+
+    when "DUPS"
+      d = d_pop
+      k = k_pop
+      @stackK.push k
+      d.times{ @stackK.push k }
+    when "PUSHS"
+      d = d_pop
+      @stackK.push d
+    when "TAKES"
+      d = d_pop
+      @stackK.push @stackK[@stackK.size - d - 1]
+    when "REVS"
+      d = d_pop
+      s = @stackK.size
+      @stackK = @stackK[0...s-d] + @stackK[s-d..-1].reverse
+    when "POPTS"
+      d = d_pop
+      loop do
+        k = k_pop
+        break if k == d
+      end
+
     else
       raise "Unreachable : #{op_k}"
     end
@@ -73,6 +96,7 @@ class State
       c1 = d_pop
       c2 = k_pop "Kを助けられない"
       @stackD.push (c1 < c2 ? 1 : 0)
+
     else
       raise "Unreachable : #{op_d}"
     end
@@ -101,7 +125,18 @@ OPS = [
   ["蛙が鳴いたので急ぎました", "DUP", 1, 1],
   ["走ってたら転びました", "SWAP", 1, 1],
 
-  ["トンネルの前に着きました", "PUSHN", 1, 0],
+  ["トンネルの前に着きました","PUSHN", 1, 0],
+  ["トンネルまで続く道にパイロンが立っていた","PUSHLAB", 1, 0],
+  ["いつも行く公園に通ったことのない道があった","GETC", 1, 0],
+  ["数分ほど歩いていると見たことのないトンネルがあった","GETN", 1, 0],
+  ["暇だったので通ってみました","PUTC", 1, 0],
+  ["仕方ないので入りました","PUTN", 1, 0],
+  ["草だらけで整備もされず山奥に続いてた","DUPS", 1, 0],
+  ["壁を見ると穴が開いていたので指をつっこんだらちょん切れた","POPS", 1, 0],
+  ["友達に話したら一緒に行くことになりました","PUSHS", 1, 0],
+  ["通行止めを無視して行きました","TAKES", 1, 0],
+  ["入ってみると中は暖かく変な臭いが立ち込めていた","REVS", 1, 0],
+  ["床の大きな穴に気がつかず落ちて体が溶けました","POPTS", 1, 0],
 
   ["初めて聞いた話だった", "NEQ", 0, 1],
   ["付き添いで行くことになった", "ADD", 0, 1],
@@ -117,7 +152,7 @@ class Program
     rev = OPS.map{|k, (_, op, _, _)| [op, k]}.to_h
     code.split("\n").map{|c|
       c = c.chomp
-      raise "Missing Op #{c}" unless rev.key? c
+      raise "Missing Op '#{c}'" unless rev.key? c
       rev[c]
     }.join("\n")
   end
@@ -130,7 +165,6 @@ class Program
       raise "そんな命令はない #{linenum}: '#{l}'" unless OPS.key? l
       i, op, k_op, d_op = OPS[l]
       k_line = linenum % 2 == 0
-      p [op, k_line, k_op, d_op]
       raise "Kの命令ではない #{linenum}: '#{l}'" if k_line and !k_op
       raise "Dの命令ではない #{linenum}: '#{l}'" if !k_line and !d_op
       op

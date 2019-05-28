@@ -42,14 +42,14 @@ class TestAdd < Test::Unit::TestCase
     PUSHZ
     POP
     DUP
-    |0,0
+    |0 0
     # K: DUP, D: POP
     |
     PUSHZ
     PUSHZ
     DUP
     POP
-    0,0|
+    0 0|
     # K cannot POP
     |
     POP
@@ -70,7 +70,7 @@ class TestAdd < Test::Unit::TestCase
     NOP
     SWAP
     NOP
-    -1,0|
+    -1 0|
     # D: SWAP
     |
     PUSHN
@@ -81,7 +81,7 @@ class TestAdd < Test::Unit::TestCase
     ADD
     NOP
     SWAP
-    |-1, 0
+    |-1 0
     # D: MUL -1 -1
     |
     PUSHN
@@ -111,11 +111,35 @@ class TestAdd < Test::Unit::TestCase
     NOP
     LT
     |0
+    # D: DUPS 3
+    1|3
+    DUPS
+    NOP
+    1 1 1 1|
+    # D: PUSHS 3
+    |3
+    PUSHS
+    NOP
+    3|
+    # D: TAKES 3
+    4 5 6 7 8|3
+    TAKES
+    NOP
+    4 5 6 7 8 5|
+    # D: REVS 3
+    4 5 6 7 8|3
+    REVS
+    NOP
+    4 5 8 7 6|
+    # D: POSTS 3
+    4 3 6 7 8|3
+    POPTS
+    4|
     EOS
     test_raw.split(/#.*\n/)[1..-1].map{|raw|
       raw = raw.split("\n")
       src = raw[1...-1]
-      stacks = raw[0].split("|",-1).map{|s|s.split(",").map(&:to_i)}
+      stacks = raw[0].split("|",-1).map{|s|s.split(" ").map(&:to_i)}
       p src
       prog = Program.raw_to_prog src.join("\n")
       prog = Program.parse prog
@@ -125,7 +149,7 @@ class TestAdd < Test::Unit::TestCase
       else
         state = prog.run_with_stack *stacks
         stacks = state.stacks
-        ans = raw[-1].split("|",-1).map{|s|s.split(",").map(&:to_i)}
+        ans = raw[-1].split("|",-1).map{|s|s.split(" ").map(&:to_i)}
         assert(src){ stacks == ans }
       end
     }
