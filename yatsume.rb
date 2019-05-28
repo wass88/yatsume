@@ -9,6 +9,10 @@ class State
     @stackK = []
     @stackD = []
   end
+  def set_stack stackK, stackD
+    @stackK = stackK
+    @stackD = stackD
+  end
   def next
     op_k, op_d = @prog[@pc]
     def k_pop msg = "Kは先に進みすぎた" 
@@ -53,19 +57,19 @@ class State
       c2 = d_pop
       @stackD.push c1
       @stackD.push c2
-    when "ADDM"
+    when "ADD"
       c1 = d_pop
       c2 = k_pop "Kを助けられない"
       @stackD.push c1+c2
-    when "MULM"
+    when "MUL"
       c1 = d_pop
       c2 = k_pop "Kを助けられない"
       @stackD.push c1*c2
-    when "NEM"
+    when "NEQ"
       c1 = d_pop
       c2 = k_pop "Kを助けられない"
       @stackD.push (c1 == c2 ? 1 : 0)
-    when "LTM"
+    when "LT"
       c1 = d_pop
       c2 = k_pop "Kを助けられない"
       @stackD.push (c1 < c2 ? 1 : 0)
@@ -99,10 +103,10 @@ OPS = [
 
   ["トンネルの前に着きました", "PUSHN", 1, 0],
 
-  ["初めて聞いた話だった", "NEM", 0, 1],
-  ["付き添いで行くことになった", "ADDM", 0, 1],
-  ["怖かったけどその道は行ったことが無かった", "LTM", 0, 1],
-  ["横にはビックリマークだけの標識があった", "MULM", 0, 1],
+  ["初めて聞いた話だった", "NEQ", 0, 1],
+  ["付き添いで行くことになった", "ADD", 0, 1],
+  ["怖かったけどその道は行ったことが無かった", "LT", 0, 1],
+  ["横にはビックリマークだけの標識があった", "MUL", 0, 1],
 ].map.with_index{|(code, op, sk, sd), i| [code, [i, op, sk==1, sd==1]]}.to_h
 
 class Program
@@ -140,8 +144,11 @@ class Program
     @lines[x]
   end
   def run
+    run_with_stack [], []
+  end
+  def run_with_stack stackK, stackD
     state = State.new self
-    puts state.to_s
+    state.set_stack stackK, stackD
     while !state.eof
       state.next
       puts state.to_s
