@@ -57,6 +57,18 @@ class State
       c1 = d_pop
       c2 = k_pop "Kを助けられない"
       @stackD.push c1+c2
+    when "MULM"
+      c1 = d_pop
+      c2 = k_pop "Kを助けられない"
+      @stackD.push c1*c2
+    when "NEM"
+      c1 = d_pop
+      c2 = k_pop "Kを助けられない"
+      @stackD.push (c1 == c2 ? 1 : 0)
+    when "LTM"
+      c1 = d_pop
+      c2 = k_pop "Kを助けられない"
+      @stackD.push (c1 < c2 ? 1 : 0)
     else
       raise "Unreachable : #{op_d}"
     end
@@ -87,7 +99,10 @@ OPS = [
 
   ["トンネルの前に着きました", "PUSHN", 1, 0],
 
+  ["初めて聞いた話だった", "NEM", 0, 1],
   ["付き添いで行くことになった", "ADDM", 0, 1],
+  ["怖かったけどその道は行ったことが無かった", "LTM", 0, 1],
+  ["横にはビックリマークだけの標識があった", "MULM", 0, 1],
 ].map.with_index{|(code, op, sk, sd), i| [code, [i, op, sk==1, sd==1]]}.to_h
 
 class Program
@@ -96,7 +111,11 @@ class Program
   end
   def self.raw_to_prog code
     rev = OPS.map{|k, (_, op, _, _)| [op, k]}.to_h
-    code.split("\n").map{|c|rev[c.chomp]}.join("\n")
+    code.split("\n").map{|c|
+      c = c.chomp
+      raise "Missing Op #{c}" unless rev.key? c
+      rev[c]
+    }.join("\n")
   end
   def self.parse code
     lines = code.split("\n")

@@ -23,37 +23,64 @@ require "test-unit"
 class TestAdd < Test::Unit::TestCase
   def test_run
     test_raw = <<~EOS
+    # K: PUSHZ
     PUSHZ
     NOP
     0|
-    #
+    # D: PUSHZ
     NOP
     PUSHZ
     |0
-    #
+    # K: POP, D: DUP
     PUSHZ
     PUSHZ
     POP
     DUP
     |0,0
-    #
+    # K: DUP, D: POP
     PUSHZ
     PUSHZ
     DUP
     POP
     0,0|
-    #
+    # K cannot POP
     POP
     NOP
     !
-    #
+    # K: PUSHN, D: ADDM
     PUSHZ
     PUSHZ
     PUSHN
     ADDM
     0|-1
+    # K: SWAP
+    PUSHZ
+    NOP
+    PUSHN
+    NOP
+    SWAP
+    NOP
+    -1,0|
+    # D: SWAP
+    PUSHN
+    PUSHZ
+    NOP
+    PUSHZ
+    NOP
+    ADDM
+    NOP
+    SWAP
+    |-1, 0
+    # D: MULM -1 -1
+    PUSHN
+    PUSHZ
+    PUSHN
+    ADDM
+    NOP
+    MULM
+    |1
     EOS
-    test_raw.split("#\n").map{|raw|
+    test_raw.split(/#.*\n/)[1..-1].map{|raw|
       raw = raw.split("\n")
       src = raw[0...-1]
       p src
