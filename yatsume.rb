@@ -1,10 +1,14 @@
+#!/usr/bin/env ruby
 class State
   RAND_SIZE = 10000
   def initialize program
     @prog = program
     s = rand(RAND_SIZE)+1
-    @label_nums = Array.new(@prog.size){|i|[s+=rand(RAND_SIZE)+1]}
-    @label_nums = Array.new(@prog.size){|i|[10000+i]}
+    if ENV['NO_RANDOMIZE'] != 1
+      @label_nums = Array.new(@prog.size){|i|s+=rand(RAND_SIZE)+1}
+    else
+      @label_nums = Array.new(@prog.size){|i|10000+i}
+    end
     @pc = 0
     @stackK = []
     @stackD = []
@@ -15,6 +19,8 @@ class State
   end
   def next
     op_k, op_d = @prog[@pc]
+
+
     def k_pop msg = "Kは先に進みすぎた" 
       raise msg unless @stackK.size >= 1
       @stackK.pop
@@ -23,6 +29,8 @@ class State
       raise msg unless @stackD.size >= 1
       @stackD.pop
     end
+
+
     case op_k
     when "NOP"
       # NOP
@@ -63,9 +71,30 @@ class State
         break if k == d
       end
 
+    when "PUSHLAB"
+      @stackK.push @label_nums[@pc]
+
+    when "GETC"
+      @stackK.push $stdin.getc.ord
+    when "GETN"
+      num = 0
+      loop do
+      c = $stdin.getc 
+      break unless ("0".."9").include? c
+      num = 10 * num + c.to_i
+      end
+      @stackK.push num
+    when "PUTC"
+      c = k_pop
+      print c.chr
+    when "PUTN"
+      n = k_pop
+      print n
     else
       raise "Unreachable : #{op_k}"
     end
+    
+
     case op_d
     when "NOP"
       # NOP
@@ -81,22 +110,30 @@ class State
       @stackD.push c1
       @stackD.push c2
     when "ADD"
-      c1 = d_pop
-      c2 = k_pop "Kを助けられない"
-      @stackD.push c1+c2
+      d = d_pop
+      k = k_pop "Kを助けられない"
+      @stackD.push d+k
     when "MUL"
-      c1 = d_pop
-      c2 = k_pop "Kを助けられない"
-      @stackD.push c1*c2
+      d = d_pop
+      k = k_pop "Kを助けられない"
+      @stackD.push d*k
     when "NEQ"
-      c1 = d_pop
-      c2 = k_pop "Kを助けられない"
-      @stackD.push (c1 == c2 ? 1 : 0)
+      d = d_pop
+      k = k_pop "Kを助けられない"
+      @stackD.push (d == k ? 1 : 0)
     when "LT"
-      c1 = d_pop
-      c2 = k_pop "Kを助けられない"
-      @stackD.push (c1 < c2 ? 1 : 0)
+      d = d_pop
+      k = k_pop "Kを助けられない"
+      @stackD.push (d < k ? 1 : 0)
 
+    when "JNZLAB"
+      d = d_pop
+      k = k_pop
+      if d != 0
+        ps = @label_nums.index(k)
+        raise "行き先がない" unless ps 
+        @pc = ps
+      end
     else
       raise "Unreachable : #{op_d}"
     end
@@ -142,6 +179,7 @@ OPS = [
   ["付き添いで行くことになった", "ADD", 0, 1],
   ["怖かったけどその道は行ったことが無かった", "LT", 0, 1],
   ["横にはビックリマークだけの標識があった", "MUL", 0, 1],
+  ["床の穴から助けようとして穴を覗いたら溶けていた", "JNZLAB", 0, 1],
 ].map.with_index{|(code, op, sk, sd), i| [code, [i, op, sk==1, sd==1]]}.to_h
 
 class Program
@@ -152,7 +190,7 @@ class Program
     rev = OPS.map{|k, (_, op, _, _)| [op, k]}.to_h
     code.split("\n").map{|c|
       c = c.chomp
-      raise "Missing Op '#{c}'" unless rev.key? c
+      raise "Missing Op '#{c}" unless rev.key? c
       rev[c]
     }.join("\n")
   end
@@ -180,13 +218,24 @@ class Program
   def run
     run_with_stack [], []
   end
-  def run_with_stack stackK, stackD
+  def run_with_stack stackK, stackD, debug=false
     state = State.new self
     state.set_stack stackK, stackD
     while !state.eof
       state.next
-      puts state.to_s
+      puts state.to_s if debug
     end
     state
   end
+  def src
+    rev = OPS.map{|k, (_, op, _, _)| [op, k]}.to_h
+    @lines.flatten.map{|l| rev[l] }.join("\n")
+  end
+end
+
+if __FILE__ == $0
+  filename = ARGV[1]
+  raise "Require a file argument" unless filename
+  prog = Program.parse(File.read(filename))
+  prog.run
 end

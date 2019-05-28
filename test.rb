@@ -1,22 +1,4 @@
-require "power_assert"
 require "./yatsume"
-
-prog = Program.parse <<~EOS
-怖くなったので帰りました
-怖くなったので帰りました
-EOS
-
-prog = Program.raw_to_prog <<~EOS
-PUSHZ
-PUSHZ
-POP
-POP
-EOS
-prog = Program.parse prog
-
-prog.run
-
-
 
 require "test-unit"
 
@@ -135,6 +117,51 @@ class TestAdd < Test::Unit::TestCase
     4 3 6 7 8|3
     POPTS
     4|
+    # NOJUMP
+    |
+    PUSHLAB
+    PUSHZ
+    NOP
+    JNZLAB
+    |
+    # PUSH1
+    |
+    PUSHN
+    PUSHZ
+    PUSHN
+    ADD
+    NOP
+    MUL
+    PUSHS
+    NOP
+    1|
+    # LOOP
+    0|10
+    PUSHLAB
+    NOP
+    PUSHN
+    ADD
+    NOP
+    PUSHZ
+    SWAP
+    ADD
+    PUSHN
+    PUSHZ
+    PUSHN
+    ADD
+    NOP
+    MUL
+    PUSHS
+    ADD
+    PUSHS
+    NOP
+    SWAP
+    DUP
+    DUP
+    JNZLAB
+    POP
+    POP
+    10|
     EOS
     test_raw.split(/#.*\n/)[1..-1].map{|raw|
       raw = raw.split("\n")
