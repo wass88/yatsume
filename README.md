@@ -55,9 +55,9 @@ Opに加えて，
 
 |命令|名前|処理|
 |-----|-----|----|
-|初めて聞いた話だった|NEQ|StackKとStackDをpopして，結果が異なれば1をpush，さもなくば0|
+|初めて聞いた話だった|NEQ|StackKとStackDをpopして，結果が異なれば1をpush，さもなくば0をpush|
 |付き添いで行くことになった|ADD|StackKとStackDをpopして，足してpush|
-怖かったけどその道は行ったことが無かった|LT|StackKとStackDをpopして，Dのほうが小さければ1をpush，さもなくば0|
+怖かったけどその道は行ったことが無かった|LT|StackKとStackDをpopして，Dのほうが小さければ1をpush，さもなくば0をpush|
 |横にはビックリマークだけの標識があった|MUL|StackKとStackDをpopして，掛けてpush|
 |床の穴から助けようとして穴を覗いたら溶けていた|JNZLAB|StackKとStackDをpopして，Dのほうが0でなければ，プログラムカウンタをKにする。|
 
