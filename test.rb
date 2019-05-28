@@ -43,20 +43,31 @@ class TestAdd < Test::Unit::TestCase
     POP
     0,0|
     #
-    PUSHN
+    POP
     NOP
-    -1|
+    !
+    #
+    PUSHZ
+    PUSHZ
+    PUSHN
+    ADDM
+    0|-1
     EOS
     test_raw.split("#\n").map{|raw|
       raw = raw.split("\n")
       src = raw[0...-1]
-      ans = raw[-1].split("|",-1).map{|s|s.split(",").map(&:to_i)}
       p src
       prog = Program.raw_to_prog src.join("\n")
       prog = Program.parse prog
-      state = prog.run
-      stacks = state.stacks
-      assert(src){ stacks == ans }
+
+      if raw[-1] == "!"
+        assert_raise { prog.run }
+      else
+        state = prog.run
+        stacks = state.stacks
+        ans = raw[-1].split("|",-1).map{|s|s.split(",").map(&:to_i)}
+        assert(src){ stacks == ans }
+      end
     }
 
   end
